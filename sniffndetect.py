@@ -4,6 +4,9 @@ import ctypes
 import threading
 from scapy.all import *
 from queue import Queue
+import argparse
+
+from csv_logger import CsvLogger
 
 banner = '''-----------------------
 SniffnDetect v.1.1
@@ -12,7 +15,7 @@ SniffnDetect v.1.1
 
 
 class SniffnDetect():
-    def __init__(self):
+    def __init__(self, log_file=None):
         self.INTERFACE = conf.iface
         self.MY_IP = [x[4] for x in conf.route.routes if x[2]
                       != '0.0.0.0' and x[3] == self.INTERFACE][0]
@@ -28,6 +31,7 @@ class SniffnDetect():
             'ICMP-SMURF': {'flag': False, 'activities': [], 'attacker-mac': []},
         }
         self.flag = False
+        self.logger = CsvLogger(log_file) if log_file else None
 
     def sniffer_threader(self):
         while self.flag:
@@ -136,6 +140,16 @@ class SniffnDetect():
                     self.FILTERED_ACTIVITIES['TCP-SYNACK']['activities'].append([
                                                                                 pkt.time, ])
                     attack_type = 'TCP-SYNACK PACKET'
+
+                # Log attack
+                if attack_type and src_ip and dst_ip:
+                    self.logger.log_attack([
+                        pkt.time,  # Unix timestamp
+                        src_ip,  # source IP
+                        dst_ip,  # destination IP
+                        attack_type,  # type of attack
+                        load_len  # size of the packet
+                    ])
 
         self.RECENT_ACTIVITIES.append(
             [pkt.time, protocol, src_ip, dst_ip, src_mac, dst_mac, src_port, dst_port, load_len, attack_type])
