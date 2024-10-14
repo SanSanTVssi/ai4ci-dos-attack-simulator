@@ -74,6 +74,16 @@
             <textarea disabled id="activities" style="height: 30vh;" class="logs-area"></textarea>
         </div>
         <script type="text/javascript">
+          function mockAttack(attackType) {
+        const validAttacks = ['TCP-SYN', 'TCP-SYNACK', 'ICMP-POD', 'ICMP-SMURF'];
+
+        if (validAttacks.includes(attackType)) {
+            ws.send('MOCK::' + attackType);
+            console.log('Mock attack sent: ' + attackType);
+        } else {
+            console.log('Invalid attack type. Use one of the following: ' + validAttacks.join(', '));
+        }
+    }
         var ws = new WebSocket('ws://' + document.domain + ':' + location.port + '/ws');
         var _element = document.getElementById('activities');
         var _element2 = document.getElementById('logs');
